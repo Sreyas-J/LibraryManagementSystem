@@ -32,7 +32,7 @@ lms: $(OBJS) $(DBS)
 # Clean rule
 clean:
 	@echo 'Cleaning up...'
-	rm -f $(OBJS) $(DBS) lms
+	rm -f $(OBJS) lms
 	@echo 'Cleanup complete.'
 
 # Phony target to prevent conflicts with files named 'clean' or 'all'

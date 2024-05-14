@@ -2,8 +2,9 @@
 #define ADMIN_H
 #include "../supportFunctions/support.h"
 
-Book *readBookFromCSV(char title[], char author[]);
-void updateBookToCSV(char title[],char author[],int copies);
+void updateBookToCSV(char oldTitle[],char oldAuthor[],char newTitle[],char newAuthor[],int newCopies,int func);
 void addBook(char title[],char author[],Profile *profile,int copies);
+void modifyBook(char oldTitle[],char oldAuthor[],char newTitle[],char newAuthor[], int newCopies, Profile *profile);
+void deleteBook(char title[],char author[],Profile *profile);
 
 #endif

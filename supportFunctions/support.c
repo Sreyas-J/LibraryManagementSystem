@@ -7,8 +7,8 @@
 
 int nextProfileId=1;
 int nextBookId=1;
-char profilesDB[] = "profiles.csv";
-char booksDB[]="books.csv";
+char profilesDB[] = "../profiles.csv";
+char booksDB[]="../books.csv";
 
 void lockFile(int fd, int lockType) {
     struct flock lock;

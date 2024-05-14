@@ -135,6 +135,13 @@ int main() {
     addBook("title","author",profile1,2);
     addBook("title","author",profile2,2);
     addBook("title","author",profile1,2);
+    addBook("t","a",profile1,3);
+
+    deleteBook("title","author",profile1);
+    deleteBook("t","a",profile2);
+
+    modifyBook("t","a","i","u",5,profile1);
+    modifyBook("t","a","t","t",4,profile2);
 
 
     if (profile1 != NULL) {
