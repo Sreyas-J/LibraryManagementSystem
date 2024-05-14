@@ -1,5 +1,5 @@
 #include "profile.h"
-#include "../supportFunctions/support.h"
+#include "../admin/admin.h"
 
 #include <string.h>
 #include <fcntl.h>
@@ -8,13 +8,9 @@
 #include <stdlib.h> 
 
 
-int nextProfileId = 1;  
-
-
 void writeProfileToCSV(Profile profile) {
     int fd;
     FILE *fp;
-    struct flock lock;
 
     // Open the file in append mode
     fp = fopen(profilesDB, "a");
@@ -26,15 +22,17 @@ void writeProfileToCSV(Profile profile) {
     // Get the file descriptor associated with the FILE stream
     fd = fileno(fp);
 
-    // Acquire the lock
+    // Lock the critical section using mutex
+    pthread_mutex_lock(&mutex);
     lockFile(fd, F_WRLCK); // Exclusive write lock
 
     // Assign ID and write data to the file
     profile.id = nextProfileId++;
-    fprintf(fp, "%d,%s,%s,%d,%d\n", profile.id, profile.name,profile.password, profile.admin, profile.borrowed);
+    fprintf(fp, "%d,%s,%s,%d,%d\n", profile.id, profile.name, profile.password, profile.admin, profile.borrowed);
 
-    // Release the lock
+    // Unlock the critical section
     lockFile(fd, F_UNLCK);
+    pthread_mutex_unlock(&mutex);
 
     // Close the file
     fclose(fp);
@@ -51,9 +49,15 @@ Profile *login(char Name[], int admin, char password[]) {
     }
 
     fd = fileno(fp);  // Get file descriptor associated with the FILE stream
-    lockFile(fd, F_RDLCK);  // Acquire read lock
+
+    // Lock the critical section using mutex
+    pthread_mutex_lock(&mutex);
+
+    // Acquire read lock
+    lockFile(fd, F_RDLCK);
 
     char line[MAX_SIZE * 10];
+    Profile *foundProfile = NULL;  // Initialize to NULL
 
     while (fgets(line, sizeof(line), fp) != NULL) {
         int profileId, profileBorrowed, profileAdmin;
@@ -62,28 +66,38 @@ Profile *login(char Name[], int admin, char password[]) {
         sscanf(line, "%d,%[^,],%[^,],%d,%d", &profileId, profileName, profilePassword, &profileAdmin, &profileBorrowed);
 
         if (strcmp(profileName, Name) == 0 && strcmp(profilePassword, password) == 0 && profileAdmin == admin) {
-            Profile *foundProfile = malloc(sizeof(Profile));  // Allocate memory for foundProfile
+            foundProfile = malloc(sizeof(Profile));  // Allocate memory for foundProfile
             if (foundProfile == NULL) {
                 printf("Memory allocation failed!\n");
-                fclose(fp);
-                return NULL;
+                break;  // Exit loop if memory allocation fails
             }
 
             foundProfile->id = profileId;
             strcpy(foundProfile->name, profileName);
+            strcpy(foundProfile->password,profilePassword);
             foundProfile->borrowed = profileBorrowed;
             foundProfile->admin = profileAdmin;
 
-            lockFile(fd, F_UNLCK);  // Release the read lock
-            fclose(fp);
-            return foundProfile;
+            printf("Profile found %s %d\n",profileName,profileAdmin);
+
+            break;  // Exit loop since profile is found
         }
     }
 
-    lockFile(fd, F_UNLCK);  // Release the read lock
+    // Release the read lock
+    lockFile(fd, F_UNLCK);
+
+    // Unlock the critical section
+    pthread_mutex_unlock(&mutex);
+
+    // Close the file
     fclose(fp);
-    printf("No such account exists\n");
-    return NULL;
+
+    if (foundProfile == NULL) {
+        printf("No such account exists\n");
+    }
+
+    return foundProfile;
 }
 
 
@@ -95,14 +109,19 @@ void createProfile(char Name[], int admin,char password[]) {
     strcpy(profile.name, Name);
 
     // Write profile data to CSV file
+    printf("Succesfully created the account\n");
     writeProfileToCSV(profile);
 }
 
 
 int main() {
     FILE *fp = fopen(profilesDB, "w");
-    fprintf(fp, "");
+    fprintf(fp, "\n");  // Write a newline character to the file
     fclose(fp);
+
+    FILE *f = fopen(booksDB, "w");
+    fprintf(f, "\n");  // Write a newline character to the file
+    fclose(f);
 
     createProfile("Sreyas", 1, "password");
     createProfile("J", 1, "p");
@@ -111,15 +130,18 @@ int main() {
     createProfile("None", 0, "s");
 
     Profile *profile1 = login("Sreyas", 1, "password");
-    Profile *profile2 = login("Sreyas", 0, "password");
+    Profile *profile2 = login("Some", 0, "a");
+
+    addBook("title","author",profile1,2);
+    addBook("title","author",profile2,2);
+    addBook("title","author",profile1,2);
+
 
     if (profile1 != NULL) {
-        printf("Profile found - ID: %d, Name: %s\n", profile1->id, profile1->name);
         free(profile1);  // Free allocated memory when done
     }
 
     if (profile2 != NULL) {
-        printf("Profile found - ID: %d, Name: %s\n", profile2->id, profile2->name);
         free(profile2);  // Free allocated memory when done
     }
 

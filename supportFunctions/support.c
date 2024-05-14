@@ -3,6 +3,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h> 
+#include <stdio.h>
+
+int nextProfileId=1;
+int nextBookId=1;
+char profilesDB[] = "profiles.csv";
+char booksDB[]="books.csv";
 
 void lockFile(int fd, int lockType) {
     struct flock lock;

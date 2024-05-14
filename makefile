@@ -1,11 +1,16 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -g
 
 C_SRCS += \
     UserAuthentication/profile.c \
-    supportFunctions/support.c
+    supportFunctions/support.c \
+	admin/admin.c
 
 OBJS = $(C_SRCS:.c=.o)
+
+DBS += \
+	profiles.csv \
+	books.csv
 
 # Rule for building object files
 %.o: %.c
@@ -14,8 +19,11 @@ OBJS = $(C_SRCS:.c=.o)
 	$(CC) $(CFLAGS) -c -o $@ $<
 	@echo 'Finished building: $<'
 
+$(DBS):
+	touch $(DBS)
+
 # Rule for building the executable
-lms: $(OBJS)
+lms: $(OBJS) $(DBS)
 	@echo 'Building executable: $@'
 	@echo 'Invoking: $(CC) Linker'
 	$(CC) $(CFLAGS) -o $@ $(OBJS)
@@ -24,7 +32,7 @@ lms: $(OBJS)
 # Clean rule
 clean:
 	@echo 'Cleaning up...'
-	rm -f $(OBJS) lms
+	rm -f $(OBJS) $(DBS) lms
 	@echo 'Cleanup complete.'
 
 # Phony target to prevent conflicts with files named 'clean' or 'all'
