@@ -1,30 +1,14 @@
+#include "profile.h"
+#include "../supportFunctions/support.h"
+
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h> 
 
-#define MAX_SIZE 20
 
-
-char profilesDB[] = "../profiles.csv";
 int nextProfileId = 1;  
-
-
-struct Book {
-    int id;
-    char title[MAX_SIZE];
-    char author[MAX_SIZE];
-} typedef Book;
-
-struct Profile {
-    int id;
-    char name[MAX_SIZE];
-    int books[MAX_SIZE];
-    char password[MAX_SIZE];
-    int borrowed;
-    int admin;
-} typedef Profile;
 
 
 void writeProfileToCSV(Profile profile) {
@@ -42,28 +26,15 @@ void writeProfileToCSV(Profile profile) {
     // Get the file descriptor associated with the FILE stream
     fd = fileno(fp);
 
-    // Set up the lock structure for advisory locking
-    lock.l_type = F_WRLCK; // Exclusive write lock
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0;
-
     // Acquire the lock
-    if (fcntl(fd, F_SETLKW, &lock) == -1) {
-        perror("Error acquiring lock");
-        fclose(fp);
-        return;
-    }
+    lockFile(fd, F_WRLCK); // Exclusive write lock
 
     // Assign ID and write data to the file
     profile.id = nextProfileId++;
     fprintf(fp, "%d,%s,%s,%d,%d\n", profile.id, profile.name,profile.password, profile.admin, profile.borrowed);
 
     // Release the lock
-    lock.l_type = F_UNLCK;
-    if (fcntl(fd, F_SETLKW, &lock) == -1) {
-        perror("Error releasing lock");
-    }
+    lockFile(fd, F_UNLCK);
 
     // Close the file
     fclose(fp);
@@ -72,14 +43,17 @@ void writeProfileToCSV(Profile profile) {
 
 Profile *login(char Name[], int admin, char password[]) {
     FILE *fp;
+    int fd;
     fp = fopen(profilesDB, "r");
     if (fp == NULL) {
         printf("Error opening file!\n");
         return NULL;
     }
 
+    fd = fileno(fp);  // Get file descriptor associated with the FILE stream
+    lockFile(fd, F_RDLCK);  // Acquire read lock
+
     char line[MAX_SIZE * 10];
-    fgets(line, sizeof(line), fp);  // Read and ignore the header line
 
     while (fgets(line, sizeof(line), fp) != NULL) {
         int profileId, profileBorrowed, profileAdmin;
@@ -100,11 +74,13 @@ Profile *login(char Name[], int admin, char password[]) {
             foundProfile->borrowed = profileBorrowed;
             foundProfile->admin = profileAdmin;
 
+            lockFile(fd, F_UNLCK);  // Release the read lock
             fclose(fp);
             return foundProfile;
         }
     }
 
+    lockFile(fd, F_UNLCK);  // Release the read lock
     fclose(fp);
     printf("No such account exists\n");
     return NULL;
@@ -124,6 +100,10 @@ void createProfile(char Name[], int admin,char password[]) {
 
 
 int main() {
+    FILE *fp = fopen(profilesDB, "w");
+    fprintf(fp, "");
+    fclose(fp);
+
     createProfile("Sreyas", 1, "password");
     createProfile("J", 1, "p");
 
