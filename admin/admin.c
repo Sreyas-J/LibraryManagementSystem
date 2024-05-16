@@ -9,13 +9,20 @@
 pthread_mutex_t Bookmutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-void updateBookToCSV(char oldTitle[],char oldAuthor[],char newTitle[],char newAuthor[],int newCopies,int func){
+Book *updateBookToCSV(char oldTitle[], char oldAuthor[], char newTitle[], char newAuthor[], int newCopies, int func) {
     FILE *fp;
     int fd;
+    Book *book = malloc(sizeof(Book));
+    if (book == NULL) {
+        printf("Memory allocation failed!\n");
+        return NULL;
+    }
+
     fp = fopen(booksDB, "r+");
     if (fp == NULL) {
         printf("Error opening file!\n");
-        return;
+        free(book);
+        return NULL;
     }
 
     fd = fileno(fp);  // Get file descriptor associated with the FILE stream
@@ -30,45 +37,76 @@ void updateBookToCSV(char oldTitle[],char oldAuthor[],char newTitle[],char newAu
     long int pos = 0;  // To store the position of the found book entry
 
     while (fgets(line, sizeof(line), fp) != NULL) {
-        int bookId, bookCopies;
-        char bookTitle[MAX_SIZE], bookAuthor[MAX_SIZE];
+        sscanf(line, "%d,%[^,],%[^,],%d", &book->id, book->title, book->author, &book->copies);
 
-        sscanf(line, "%d,%[^,],%[^,],%d", &bookId, bookTitle, bookAuthor, &bookCopies);
+        if (func != 2) {
+            if (strcmp(book->title, oldTitle) == 0 && strcmp(book->author, oldAuthor) == 0) {
+                if (func == 0) {
+                    book->copies += newCopies;  // Update the number of copies
+                } else if (func == 1) {
+                    strcpy(book->title, newTitle);
+                    strcpy(book->author, newAuthor);
+                    book->copies = newCopies;
+                }
 
-        if (strcmp(bookTitle, oldTitle) == 0 && strcmp(bookAuthor, oldAuthor) == 0) {
-            // Update the number of oldCopies
-            if(func==0) bookCopies += newCopies;
+                // Store the position of the found entry
+                pos = ftell(fp) - strlen(line);
 
-            else if(func==1){
-                strcpy(bookTitle,newTitle);
-                strcpy(bookAuthor,newAuthor);
-                bookCopies=newCopies;
+                // Rewind the file to the position of the found entry
+                fseek(fp, pos, SEEK_SET);
+
+                // Write the updated data back to the file
+                fprintf(fp, "%d,%s,%s,%d\n", book->id, book->title, book->author, book->copies);
+
+                // Release the lock
+                lockFile(fd, F_UNLCK);
+
+                // Unlock the critical section
+                pthread_mutex_unlock(&Bookmutex);
+
+                // Close the file
+                fclose(fp);
+                return book;
             }
+        } else if (func == 2) {
+            if (strlen(oldTitle) > 1 && book->copies>0 && strcmp(book->title, oldTitle) == 0) {
+                // Release the lock
+                lockFile(fd, F_UNLCK);
 
-            // Store the position of the found entry
-            pos = ftell(fp) - strlen(line);
+                // Unlock the critical section
+                pthread_mutex_unlock(&Bookmutex);
 
-            // Rewind the file to the position of the found entry
-            fseek(fp, pos, SEEK_SET);
+                // Close the file
+                fclose(fp);
+                return book;
+            }
+            if (strlen(oldAuthor) > 1 && book->copies>0 && strcmp(book->author, oldAuthor) == 0) {
+                // Release the lock
+                lockFile(fd, F_UNLCK);
 
-            // Write the updated data back to the file
-            fprintf(fp, "%d,%s,%s,%d\n", bookId, bookTitle, bookAuthor, bookCopies);
+                // Unlock the critical section
+                pthread_mutex_unlock(&Bookmutex);
 
-            // Release the lock
-            lockFile(fd, F_UNLCK);
-
-            // Unlock the critical section
-            pthread_mutex_unlock(&Bookmutex);
-
-            // Close the file
-            fclose(fp);
-            return;
+                // Close the file
+                fclose(fp);
+                return book;
+            }
         }
     }
 
-    // If the book does not exist, simply append it to the file
-    fseek(fp, 0, SEEK_END);  // Move to the end of the file
-    fprintf(fp, "%d,%s,%s,%d\n", nextBookId++, oldTitle, oldAuthor, newCopies);
+    // If the book does not exist and func is not 2, append it to the file
+    if (func != 2) {
+        book->id = nextBookId++;
+        strcpy(book->title, oldTitle);
+        strcpy(book->author, oldAuthor);
+        book->copies = newCopies;
+
+        fseek(fp, 0, SEEK_END);  // Move to the end of the file
+        fprintf(fp, "%d,%s,%s,%d\n", book->id, book->title, book->author, book->copies);
+    } else {
+        free(book);
+        book = NULL;
+    }
 
     // Release the lock
     lockFile(fd, F_UNLCK);
@@ -78,6 +116,7 @@ void updateBookToCSV(char oldTitle[],char oldAuthor[],char newTitle[],char newAu
 
     // Close the file
     fclose(fp);
+    return book;
 }
 
 
@@ -111,4 +150,29 @@ void deleteBook(char title[],char author[],Profile *profile){
     else{
         printf("This user doesn't have the required permisions\n");
     }
+}
+
+
+Book *searchBook(char title[],char author[],Profile *profile){
+    if(profile!=NULL && profile->admin==1){
+        Book *book;
+        if(strlen(title)>1){
+            book=updateBookToCSV(title,author,title,author,0,2);
+        }
+        else if(strlen(author)>1){
+            book=updateBookToCSV(title,author,title,author,0,2);
+        }
+
+        if(book!=NULL){
+                printf("Found the book %s by %s with qty. %d\n",book->title,book->author,book->copies);
+            }
+            else{
+                printf("No such book found...\n");
+            }
+            return book;
+        }
+    else{
+        printf("This user doesn't have the required permisions\n");
+    }
+    return NULL;
 }

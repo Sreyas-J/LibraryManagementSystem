@@ -135,13 +135,17 @@ int main() {
     addBook("title","author",profile1,2);
     addBook("title","author",profile2,2);
     addBook("title","author",profile1,2);
-    addBook("t","a",profile1,3);
+    addBook("ti","au",profile1,3);
 
     deleteBook("title","author",profile1);
-    deleteBook("t","a",profile2);
+    deleteBook("ti","au",profile2);
 
-    modifyBook("t","a","i","u",5,profile1);
-    modifyBook("t","a","t","t",4,profile2);
+    modifyBook("ti","au","it","ut",5,profile1);
+    modifyBook("ti","au","it","ut",4,profile2);
+
+    searchBook("it","",profile1);
+    searchBook("","ut",profile1);
+    searchBook("title","",profile1);
 
 
     if (profile1 != NULL) {
