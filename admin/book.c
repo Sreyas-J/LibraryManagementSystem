@@ -1,4 +1,4 @@
-#include "admin.h"
+#include "book.h"
 
 #include<string.h>
 #include<fcntl.h>
@@ -120,25 +120,29 @@ Book *updateBookToCSV(char oldTitle[], char oldAuthor[], char newTitle[], char n
 }
 
 
-void addBook(char title[],char author[],Profile *profile,int copies){
+Book *addBook(char title[],char author[],Profile *profile,int copies){
     if(profile!=NULL && profile->admin==1){
-        updateBookToCSV(title,author,title,author,copies,0);
-            printf("Successfully %s has added %d oldCopies of %s by %s\n",profile->name,copies,title,author);
+        Book *book=updateBookToCSV(title,author,title,author,copies,0);
+        printf("Successfully %s has added %d oldCopies of %s by %s\n",profile->name,copies,title,author);
+        return book;
     }
     else{
         printf("This user doesn't have the required permisions\n");
     }
+    return NULL;
 }
 
 
-void modifyBook(char oldTitle[],char oldAuthor[],char newTitle[],char newAuthor[], int newCopies, Profile *profile){
-    if(profile!=NULL && profile->admin==1){
-        updateBookToCSV(oldTitle,oldAuthor,newTitle,newAuthor,newCopies,1);
+Book *modifyBook(char oldTitle[],char oldAuthor[],char newTitle[],char newAuthor[], int newCopies, Profile *profile,int override){
+    if(profile!=NULL && (profile->admin==1 || override==1)){
+        Book *book=updateBookToCSV(oldTitle,oldAuthor,newTitle,newAuthor,newCopies,1);
         printf("Successfully %s has updated %s by %s to %s by %s of qty. %d\n",profile->name,oldTitle,oldAuthor,newTitle,newAuthor,newCopies);
+        return book;
     }
     else{
         printf("This user doesn't have the required permisions\n");
     }
+    return NULL;
 }
 
 
@@ -154,7 +158,7 @@ void deleteBook(char title[],char author[],Profile *profile){
 
 
 Book *searchBook(char title[],char author[],Profile *profile){
-    if(profile!=NULL && profile->admin==1){
+    if(profile!=NULL){
         Book *book;
         if(strlen(title)>1){
             book=updateBookToCSV(title,author,title,author,0,2);
@@ -166,9 +170,9 @@ Book *searchBook(char title[],char author[],Profile *profile){
         if(book!=NULL){
                 printf("Found the book %s by %s with qty. %d\n",book->title,book->author,book->copies);
             }
-            else{
-                printf("No such book found...\n");
-            }
+        else{
+            printf("No such book found...\n");
+        }
             return book;
         }
     else{

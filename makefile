@@ -4,13 +4,15 @@ CFLAGS = -Wall -Wextra -g
 C_SRCS += \
     UserAuthentication/profile.c \
     supportFunctions/support.c \
-	admin/admin.c
+	admin/book.c \
+	admin/member.c
 
 OBJS = $(C_SRCS:.c=.o)
 
 DBS += \
 	profiles.csv \
-	books.csv
+	books.csv \
+	transactions.csv
 
 # Rule for building object files
 %.o: %.c

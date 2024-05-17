@@ -5,9 +5,11 @@
 #define MAX_SIZE 20
 
 extern int nextProfileId;  
+extern int nextTransactionId;
 extern int nextBookId;
 extern char profilesDB[];
 extern char booksDB[];
+extern char transactionsDB[];
 
 typedef struct Book {
     int id;
@@ -19,11 +21,19 @@ typedef struct Book {
 typedef struct Profile {
     int id;
     char name[MAX_SIZE];
-    int books[MAX_SIZE];
+    // int books[MAX_SIZE];
     char password[MAX_SIZE];
     int borrowed;
     int admin;
 } Profile;
+
+typedef struct Transaction {
+    int transactionID;
+    int profileID;
+    int bookID;
+    int copies;
+    int type;
+} Transaction;
 
 void lockFile(int fd, int lockType);
 
