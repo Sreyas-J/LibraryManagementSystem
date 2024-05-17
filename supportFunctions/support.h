@@ -32,7 +32,7 @@ typedef struct Transaction {
     int profileID;
     int bookID;
     int copies;
-    int type;
+    char type[];
 } Transaction;
 
 void lockFile(int fd, int lockType);

@@ -82,18 +82,18 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
         sscanf(line, "%d,%[^,],%[^,],%d,%d", &profileId, profileName, profilePassword, &profileAdmin, &profileBorrowed);
         if(func==1 && profileAdmin==0) printf("%d              %s                     %d\n",profileId,profileName,profileBorrowed);
 
-        if (strcmp(profileName, Name) == 0 && strcmp(profilePassword, password) == 0 && profileAdmin == admin && func!=1) {
+        if ((strcmp(profileName, Name) == 0) && ((strcmp(profilePassword,password)==0 && profileAdmin==admin && (func==0||func==2))||(func==3))) {
             foundProfile = malloc(sizeof(Profile));
             if (foundProfile == NULL) {
-                    printf("Memory allocation failed!\n");
-                    break;  // Exit loop if memory allocation fails
-                }
+                printf("Memory allocation failed!\n");
+                break;  // Exit loop if memory allocation fails
+            }
 
-                foundProfile->id = profileId;
-                strcpy(foundProfile->name, profileName);
-                strcpy(foundProfile->password,profilePassword);
-                foundProfile->borrowed = profileBorrowed;
-                foundProfile->admin = profileAdmin;
+            foundProfile->id = profileId;
+            strcpy(foundProfile->name, profileName);
+            strcpy(foundProfile->password,profilePassword);
+            foundProfile->borrowed = profileBorrowed;
+            foundProfile->admin = profileAdmin;
             if(func==0){
                   // Allocate memory for foundProfile
 
@@ -192,6 +192,10 @@ int main() {
 
     listMembers(profile1);
     listMembers(profile2);
+
+    searchMember(profile1,profile2->name);
+    searchMember(profile2,profile2->name);
+    searchMember(profile2,profile1->name);
 
     if (profile1 != NULL) {
         free(profile1);  // Free allocated memory when done
