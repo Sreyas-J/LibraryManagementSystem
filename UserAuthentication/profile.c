@@ -42,7 +42,7 @@ void writeProfileToCSV(Profile profile) {
 }
 
 
-Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies) {
+Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies,int func) {
     FILE *fp;
     int fd;
     fp = fopen(profilesDB, "r+");
@@ -57,7 +57,7 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
     pthread_mutex_lock(&mutex);
 
     // Acquire read lock
-    if(copies<0) lockFile(fd, F_RDLCK);
+    if(func!=2) lockFile(fd, F_RDLCK);
     else lockFile(fd,F_WRLCK);
 
     char line[MAX_SIZE * 10];
@@ -65,14 +65,24 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
 
     long int pos = 0;
 
+    if(func==1){ 
+        if(admin==0){
+            return NULL; 
+        }
+        else{
+            printf("\nMEMBERS DETAILS:-\nProfileID      Name                  No.of Books Borrowed\n");
+        }
+    }
+
     while (fgets(line, sizeof(line), fp) != NULL) {
         int profileId, profileBorrowed, profileAdmin;
         char profileName[MAX_SIZE], profilePassword[MAX_SIZE];
 
 
         sscanf(line, "%d,%[^,],%[^,],%d,%d", &profileId, profileName, profilePassword, &profileAdmin, &profileBorrowed);
+        if(func==1 && profileAdmin==0) printf("%d              %s                     %d\n",profileId,profileName,profileBorrowed);
 
-        if (strcmp(profileName, Name) == 0 && strcmp(profilePassword, password) == 0 && profileAdmin == admin) {
+        if (strcmp(profileName, Name) == 0 && strcmp(profilePassword, password) == 0 && profileAdmin == admin && func!=1) {
             foundProfile = malloc(sizeof(Profile));
             if (foundProfile == NULL) {
                     printf("Memory allocation failed!\n");
@@ -84,12 +94,12 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
                 strcpy(foundProfile->password,profilePassword);
                 foundProfile->borrowed = profileBorrowed;
                 foundProfile->admin = profileAdmin;
-            if(copies==0){
+            if(func==0){
                   // Allocate memory for foundProfile
 
                 printf("Profile found %s %d.\n",profileName,profileAdmin);
             }
-            else{
+            else if(func==2){
                 pos = ftell(fp) - strlen(line);
                 foundProfile->borrowed+=copies;
                 // Rewind the file to the position of the found entry
@@ -97,7 +107,7 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
                 fprintf(fp, "%d,%s,%s,%d,%d\n", foundProfile->id, foundProfile->name, foundProfile->password, foundProfile->admin, foundProfile->borrowed);
             }
 
-            break;  // Exit loop since profile is found
+            if(func!=1) break;  // Exit loop since profile is found
         }
     }
 
@@ -110,6 +120,8 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
     // Close the file
     fclose(fp);
 
+    if(func==1) return NULL;
+
     if (foundProfile == NULL) {
         printf("No such account exists\n");
     }
@@ -119,7 +131,7 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
 
 
 Profile *login(char Name[], int admin, char password[]){
-    return readAndUpdateProfiles(Name,admin,password,0);
+    return readAndUpdateProfiles(Name,admin,password,0,0);
 }
 
 
@@ -138,15 +150,15 @@ void createProfile(char Name[], int admin,char password[]) {
 
 int main() {
     FILE *fp = fopen(profilesDB, "w");
-    fprintf(fp, "\n");  // Write a newline character to the file
+    fprintf(fp, "ID,Name,Password,Admin Status,No. of books Borrowed\n");  // Write a newline character to the file
     fclose(fp);
 
     FILE *f = fopen(booksDB, "w");
-    fprintf(f, "\n");  // Write a newline character to the file
+    fprintf(f, "ID,Title,Author,Copies\n");  // Write a newline character to the file
     fclose(f);
 
     FILE *f1 = fopen(transactionsDB, "w");
-    fprintf(f1, "\n");  // Write a newline character to the file
+    fprintf(f1, "TransactionID,ProfileID,BookID,Copies,Transaction Type\n");  // Write a newline character to the file
     fclose(f1);
 
     createProfile("Sreyas", 1, "password");
@@ -177,6 +189,9 @@ int main() {
     book1=borrowBook(book1,profile1,profile1,3);
 
     book1=returnBook(book1,profile2,profile1,3);
+
+    listMembers(profile1);
+    listMembers(profile2);
 
     if (profile1 != NULL) {
         free(profile1);  // Free allocated memory when done
