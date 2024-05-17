@@ -4,7 +4,8 @@
 
 extern pthread_mutex_t mutex;
 void writeProfileToCSV(Profile profile);
-Profile *login(char Name[], int admin, char password[],int copies);
+Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies);
+Profile *login(char Name[], int admin, char password[]);
 void createProfile(char Name[], int admin,char password[]);
 
 #endif

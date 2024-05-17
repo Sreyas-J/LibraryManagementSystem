@@ -4,6 +4,7 @@
 #include "book.h"
 
 #include<stdio.h>
+#include<string.h>
 #include<fcntl.h>
 
 Book *writeTransactionToCSV(Book *book,Profile *profile,int copies,char type[]){
@@ -32,14 +33,14 @@ Book *writeTransactionToCSV(Book *book,Profile *profile,int copies,char type[]){
     // Close the file
     fclose(fp);
 
-    if(type==0){
+    if(strcmp(type,"Borrow")==0){
         book=modifyBook(book->title,book->author,book->title,book->author,book->copies-copies,profile,1);
-        profile=login(profile->name,profile->admin,profile->password,copies);
+        profile=readAndUpdateProfiles(profile->name,profile->admin,profile->password,copies);
     }
 
-    else{
+    else if(strcmp(type,"Return")==0){
         book=modifyBook(book->title,book->author,book->title,book->author,book->copies+copies,profile,1);
-        profile=login(profile->name,profile->admin,profile->password,-copies);
+        profile=readAndUpdateProfiles(profile->name,profile->admin,profile->password,-copies);
     }
 
     return book;

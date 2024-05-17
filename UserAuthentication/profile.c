@@ -42,7 +42,7 @@ void writeProfileToCSV(Profile profile) {
 }
 
 
-Profile *login(char Name[], int admin, char password[],int copies) {
+Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies) {
     FILE *fp;
     int fd;
     fp = fopen(profilesDB, "r+");
@@ -118,6 +118,11 @@ Profile *login(char Name[], int admin, char password[],int copies) {
 }
 
 
+Profile *login(char Name[], int admin, char password[]){
+    return readAndUpdateProfiles(Name,admin,password,0);
+}
+
+
 void createProfile(char Name[], int admin,char password[]) {
     Profile profile;
     strcpy(profile.password,password);
@@ -150,8 +155,8 @@ int main() {
     createProfile("Some", 0, "a");
     createProfile("None", 0, "s");
 
-    Profile *profile1 = login("Sreyas", 1, "password",0);
-    Profile *profile2 = login("Some", 0, "a",0);
+    Profile *profile1 = login("Sreyas", 1, "password");
+    Profile *profile2 = login("Some", 0, "a");
 
     addBook("title","author",profile1,2);
     addBook("title","author",profile2,2);

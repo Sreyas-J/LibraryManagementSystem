@@ -123,7 +123,7 @@ Book *updateBookToCSV(char oldTitle[], char oldAuthor[], char newTitle[], char n
 Book *addBook(char title[],char author[],Profile *profile,int copies){
     if(profile!=NULL && profile->admin==1){
         Book *book=updateBookToCSV(title,author,title,author,copies,0);
-        printf("Successfully %s has added %d oldCopies of %s by %s\n",profile->name,copies,title,author);
+        printf("Successfully %s has added %d copies of %s by %s\n",profile->name,copies,title,author);
         return book;
     }
     else{
