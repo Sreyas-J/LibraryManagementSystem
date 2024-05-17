@@ -2,7 +2,6 @@
 #define PROFILE_H
 #include "../supportFunctions/support.h"
 
-extern pthread_mutex_t mutex;
 void writeProfileToCSV(Profile profile);
 Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies,int func);
 Profile *login(char Name[], int admin, char password[]);

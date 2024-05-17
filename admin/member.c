@@ -1,10 +1,16 @@
 #include "member.h"
 #include "../supportFunctions/support.h"
 #include "../UserAuthentication/profile.h"
+#include "../admin/book.h"
 
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<fcntl.h>
+
+
+pthread_mutex_t Transactionmutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 typedef struct {
     int *bookIDs;
@@ -19,6 +25,14 @@ BookList* getBookIDsForProfile(int profileID) {
         printf("Error opening file!\n");
         return NULL;
     }
+
+    int fd = fileno(fp);  // Get file descriptor associated with the FILE stream
+
+    // Lock the critical section using Bookmutex
+    pthread_mutex_lock(&Transactionmutex);
+
+    // Acquire write lock
+    lockFile(fd, F_RDLCK);
 
     char line[MAX_SIZE * 5];
     BookList *bookList = malloc(sizeof(BookList));
@@ -60,6 +74,11 @@ BookList* getBookIDsForProfile(int profileID) {
         }
     }
 
+    lockFile(fd, F_UNLCK);
+
+    // Unlock the critical section
+    pthread_mutex_unlock(&Transactionmutex);
+
     fclose(fp);
     return bookList;
 }
@@ -71,6 +90,15 @@ void printBookDetails(BookList *booklist) {
         printf("Error opening file!\n");
         return;
     }
+
+    int fd = fileno(fp);  // Get file descriptor associated with the FILE stream
+
+    // Lock the critical section using Bookmutex
+    pthread_mutex_lock(&Bookmutex);
+
+    // Acquire write lock
+    lockFile(fd, F_RDLCK);
+
 
     char line[MAX_SIZE * 4];
     Book book;
@@ -96,8 +124,13 @@ void printBookDetails(BookList *booklist) {
         }
     }
 
-    free(foundBooks);
+    lockFile(fd, F_UNLCK);
+
+    // Unlock the critical section
+    pthread_mutex_unlock(&Bookmutex);
     fclose(fp);
+
+    free(foundBooks);
 }
 
 

@@ -1,6 +1,7 @@
 #include "profile.h"
 #include "../admin/book.h"
 #include "../admin/member.h"
+#include "../supportFunctions/support.h"
 
 #include <string.h>
 #include <fcntl.h>

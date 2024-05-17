@@ -4,6 +4,10 @@
 
 #define MAX_SIZE 20
 
+extern pthread_mutex_t Bookmutex;
+extern pthread_mutex_t Transactionmutex;
+extern pthread_mutex_t mutex;
+
 extern int nextProfileId;  
 extern int nextTransactionId;
 extern int nextBookId;
