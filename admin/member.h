@@ -4,6 +4,6 @@
 #include "../UserAuthentication/profile.h"
 
 void listMembers(Profile *profile);
-void searchMember(Profile *profile,char Name[]);
+void searchMember(Profile *profile,char Name[],char str[]);
 
 #endif

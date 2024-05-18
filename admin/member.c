@@ -84,7 +84,7 @@ BookList* getBookIDsForProfile(int profileID) {
 }
 
 
-void printBookDetails(BookList *booklist) {
+void printBookDetails(BookList *booklist,char str[]) {
     FILE *fp = fopen(booksDB, "r");
     if (fp == NULL) {
         printf("Error opening file!\n");
@@ -109,6 +109,7 @@ void printBookDetails(BookList *booklist) {
         fclose(fp);
         return;
     }
+    char msg[]="";
 
     fgets(line, sizeof(line), fp);
     printf("Books borrowed:\n");
@@ -117,7 +118,9 @@ void printBookDetails(BookList *booklist) {
 
         for (int i = 0; i < booklist->count; i++) {
             if (book.id == booklist->bookIDs[i] && !foundBooks[i]) {
-                printf("ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author,booklist->copies[i]);
+
+                sprintf(msg,"ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author,booklist->copies[i]);
+                strcat(str,msg);
                 foundBooks[i] = 1; // Mark this book ID as found
                 break;
             }
@@ -144,20 +147,22 @@ void listMembers(Profile *profile){
 }
 
 
-void searchMember(Profile *profile,char Name[]){
+void searchMember(Profile *profile,char Name[],char str[]){
     BookList *booklist;
     if(profile->admin==1){
         printf("User details:-\n");
+        strcpy(str,"User details:-\n");
         Profile *customer=readAndUpdateProfiles(Name,0,"",0,3);
         booklist=getBookIDsForProfile(customer->id);
     }
     else if(strcmp(profile->name,Name)==0){
         printf("User details:-\n");
+        strcpy(str,"User details:-\n");
         booklist=getBookIDsForProfile(profile->id);
     }
     else{
         printf("This user doesn't have permission to access this data\n");
         return;
     }
-    printBookDetails(booklist);
+    printBookDetails(booklist,str);
 }

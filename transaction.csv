@@ -1,3 +1,1 @@
 TransactionID,ProfileID,BookID,Copies,Transaction Type
-1,3,2,3,Borrow
-2,3,2,3,Return

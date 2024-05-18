@@ -149,66 +149,66 @@ void createProfile(char Name[], int admin,char password[]) {
 }
 
 
-int main() {
-    FILE *fp = fopen(profilesDB, "w");
-    fprintf(fp, "ID,Name,Password,Admin Status,No. of books Borrowed\n");  // Write a newline character to the file
-    fclose(fp);
+// int main() {
+//     FILE *fp = fopen(profilesDB, "w");
+//     fprintf(fp, "ID,Name,Password,Admin Status,No. of books Borrowed\n");  // Write a newline character to the file
+//     fclose(fp);
 
-    FILE *f = fopen(booksDB, "w");
-    fprintf(f, "ID,Title,Author,Copies\n");  // Write a newline character to the file
-    fclose(f);
+//     FILE *f = fopen(booksDB, "w");
+//     fprintf(f, "ID,Title,Author,Copies\n");  // Write a newline character to the file
+//     fclose(f);
 
-    FILE *f1 = fopen(transactionsDB, "w");
-    fprintf(f1, "TransactionID,ProfileID,BookID,Copies,Transaction Type\n");  // Write a newline character to the file
-    fclose(f1);
+//     FILE *f1 = fopen(transactionsDB, "w");
+//     fprintf(f1, "TransactionID,ProfileID,BookID,Copies,Transaction Type\n");  // Write a newline character to the file
+//     fclose(f1);
 
-    createProfile("Sreyas", 1, "password");
-    createProfile("J", 1, "p");
+//     createProfile("Sreyas", 1, "password");
+//     createProfile("J", 1, "p");
 
-    createProfile("Some", 0, "a");
-    createProfile("None", 0, "s");
+//     createProfile("Some", 0, "a");
+//     createProfile("None", 0, "s");
 
-    Profile *profile1 = login("Sreyas", 1, "password");
-    Profile *profile2 = login("Some", 0, "a");
+//     Profile *profile1 = login("Sreyas", 1, "password");
+//     Profile *profile2 = login("Some", 0, "a");
 
-    addBook("title","author",profile1,2);
-    addBook("title","author",profile2,2);
-    addBook("title","author",profile1,2);
-    addBook("ti","au",profile1,3);
+//     addBook("title","author",profile1,2);
+//     addBook("title","author",profile2,2);
+//     addBook("title","author",profile1,2);
+//     addBook("ti","au",profile1,3);
 
-    deleteBook("title","author",profile1);
-    deleteBook("ti","au",profile2);
+//     deleteBook("title","author",profile1);
+//     deleteBook("ti","au",profile2);
 
-    modifyBook("ti","au","it","ut",5,profile1,0);
-    modifyBook("ti","au","it","ut",4,profile2,0);
+//     modifyBook("ti","au","it","ut",5,profile1,0);
+//     modifyBook("ti","au","it","ut",4,profile2,0);
 
-    Book *book1=searchBook("it","",profile1);
-    Book *book2=searchBook("","ut",profile1);
-    Book *book3=searchBook("title","",profile1);
+//     Book *book1=searchBook("it","",profile1);
+//     Book *book2=searchBook("","ut",profile1);
+//     Book *book3=searchBook("title","",profile1);
 
-    book1=borrowBook(book1,profile2,profile1,3);
-    book1=borrowBook(book1,profile1,profile1,3);
+//     book1=borrowBook(book1,profile2,profile1,3);
+//     book1=borrowBook(book1,profile1,profile1,3);
 
-    book1=returnBook(book1,profile2,profile1,3);
+//     book1=returnBook(book1,profile2,profile1,3);
 
-    listMembers(profile1);
-    listMembers(profile2);
+//     listMembers(profile1);
+//     listMembers(profile2);
 
-    searchMember(profile1,profile2->name);
-    searchMember(profile2,profile2->name);
-    searchMember(profile2,profile1->name);
+//     searchMember(profile1,profile2->name);
+//     searchMember(profile2,profile2->name);
+//     searchMember(profile2,profile1->name);
 
-    if (profile1 != NULL) {
-        free(profile1);  // Free allocated memory when done
-    }
+//     if (profile1 != NULL) {
+//         free(profile1);  // Free allocated memory when done
+//     }
 
-    if (profile2 != NULL) {
-        free(profile2);  // Free allocated memory when done
-    }
+//     if (profile2 != NULL) {
+//         free(profile2);  // Free allocated memory when done
+//     }
 
-    free(book1);
-    free(book2);
-    free(book3);
+//     free(book1);
+//     free(book2);
+//     free(book3);
     
-    return 0;
-}
+//     return 0;
+// }
