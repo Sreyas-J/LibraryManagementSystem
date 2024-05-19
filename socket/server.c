@@ -214,6 +214,32 @@ void *clientHandler(void *socket_desc) {
                 strcpy(prompt,"The book has succesfully been borrowed.\n");
             }
 
+            else if(strcmp(client_message,"RETURN")==0){
+                memset(name,0,BUFFER_SIZE);
+                memset(password,0,BUFFER_SIZE);
+
+                Profile *master=malloc(sizeof(Profile));
+                master=NULL;
+                Book *book=malloc(sizeof(Book));
+                book=NULL;
+
+                while(book==NULL){
+                    while(master==NULL){
+                        sendToClient("Enter a valid admin username.\n",prompt,client_message,name);
+                        sendToClient("Enter the admin password.\n",prompt,client_message,password);
+                        master=login(name,password);
+                        if(master->admin==0) master==NULL;
+                    }
+
+                    sendToClient("Enter the book name you choose to return.\n",prompt,client_message,client_message);
+                    book=searchBook(client_message,"",master);
+                }
+
+                sendToClient("Enter a valid no. of copies you choose to return.\n",prompt,client_message,client_message);
+                book=returnBook(book,profile,master,atoi(client_message));
+                strcpy(prompt,"The book has succesfully been returned.\n");
+            }
+
             else if (strcmp(client_message, "LOGOUT") == 0) {
                 free(profile);
                 close(sock);

@@ -20,6 +20,7 @@ typedef struct {
 } BookList;
 
 
+
 BookList* getBookIDsForProfile(int profileID) {
     FILE *fp = fopen(transactionsDB, "r");
     if (fp == NULL) {
@@ -29,10 +30,10 @@ BookList* getBookIDsForProfile(int profileID) {
 
     int fd = fileno(fp);  // Get file descriptor associated with the FILE stream
 
-    // Lock the critical section using Bookmutex
+    // Lock the critical section using Transactionmutex
     pthread_mutex_lock(&Transactionmutex);
 
-    // Acquire write lock
+    // Acquire read lock
     lockFile(fd, F_RDLCK);
 
     char line[MAX_SIZE * 5];
@@ -46,33 +47,52 @@ BookList* getBookIDsForProfile(int profileID) {
     bookList->bookIDs = malloc(MAX_SIZE * sizeof(int));  // Initial allocation for 100 book IDs
     bookList->copies = malloc(MAX_SIZE * sizeof(int));
 
-    if (bookList->bookIDs == NULL) {
+    if (bookList->bookIDs == NULL || bookList->copies == NULL) {
         printf("Memory allocation failed!\n");
+        free(bookList->bookIDs);
         free(bookList);
         fclose(fp);
         return NULL;
     }
 
     bookList->count = 0;
-    Transaction *transaction=malloc(sizeof(Transaction));
+    Transaction transaction;
 
     while (fgets(line, sizeof(line), fp) != NULL) {
-        sscanf(line, "%d,%d,%d,%d,%[^,\n]", &transaction->transactionID, &transaction->profileID, &transaction->bookID, &transaction->copies, transaction->type);
+        sscanf(line, "%d,%d,%d,%d,%[^,\n]", &transaction.transactionID, &transaction.profileID, &transaction.bookID, &transaction.copies, transaction.type);
 
-        if (transaction->profileID == profileID) {
-            if (bookList->count >= MAX_SIZE) {
-                // Reallocate if the current allocation is not enough
-                bookList->bookIDs = realloc(bookList->bookIDs, (bookList->count + MAX_SIZE) * sizeof(int));
-                if (bookList->bookIDs == NULL) {
-                    printf("Memory allocation failed!\n");
-                    free(bookList);
-                    fclose(fp);
-                    return NULL;
+        if (transaction.profileID == profileID) {
+            // Find if the book is already in the list
+            int found = 0;
+            for (int i = 0; i < bookList->count; i++) {
+                if (bookList->bookIDs[i] == transaction.bookID) {
+                    if (strcmp(transaction.type, "Borrow") == 0) {
+                        bookList->copies[i] += transaction.copies;
+                    } else if (strcmp(transaction.type, "Return") == 0) {
+                        bookList->copies[i] -= transaction.copies;
+                    }
+                    found = 1;
+                    break;
                 }
             }
-            bookList->bookIDs[bookList->count] = transaction->bookID;
-            bookList->copies[bookList->count]= transaction->copies;
-            bookList->count++;
+            if (!found) {
+                if (bookList->count >= MAX_SIZE) {
+                    // Reallocate if the current allocation is not enough
+                    bookList->bookIDs = realloc(bookList->bookIDs, (bookList->count + MAX_SIZE) * sizeof(int));
+                    bookList->copies = realloc(bookList->copies, (bookList->count + MAX_SIZE) * sizeof(int));
+                    if (bookList->bookIDs == NULL || bookList->copies == NULL) {
+                        printf("Memory allocation failed!\n");
+                        free(bookList->bookIDs);
+                        free(bookList->copies);
+                        free(bookList);
+                        fclose(fp);
+                        return NULL;
+                    }
+                }
+                bookList->bookIDs[bookList->count] = transaction.bookID;
+                bookList->copies[bookList->count] = (strcmp(transaction.type, "Borrow") == 0) ? transaction.copies : -transaction.copies;
+                bookList->count++;
+            }
         }
     }
 
