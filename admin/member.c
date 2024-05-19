@@ -15,8 +15,9 @@ pthread_mutex_t Transactionmutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct {
     int *bookIDs;
+    int *borrowedCopies;
+    int *returnedCopies;
     int count;
-    int *copies;
 } BookList;
 
 
@@ -45,11 +46,14 @@ BookList* getBookIDsForProfile(int profileID) {
     }
 
     bookList->bookIDs = malloc(MAX_SIZE * sizeof(int));  // Initial allocation for 100 book IDs
-    bookList->copies = malloc(MAX_SIZE * sizeof(int));
+    bookList->borrowedCopies = malloc(MAX_SIZE * sizeof(int));
+    bookList->returnedCopies = malloc(MAX_SIZE * sizeof(int));
 
-    if (bookList->bookIDs == NULL || bookList->copies == NULL) {
+    if (bookList->bookIDs == NULL || bookList->borrowedCopies == NULL || bookList->returnedCopies == NULL) {
         printf("Memory allocation failed!\n");
         free(bookList->bookIDs);
+        free(bookList->borrowedCopies);
+        free(bookList->returnedCopies);
         free(bookList);
         fclose(fp);
         return NULL;
@@ -67,9 +71,9 @@ BookList* getBookIDsForProfile(int profileID) {
             for (int i = 0; i < bookList->count; i++) {
                 if (bookList->bookIDs[i] == transaction.bookID) {
                     if (strcmp(transaction.type, "Borrow") == 0) {
-                        bookList->copies[i] += transaction.copies;
+                        bookList->borrowedCopies[i] += transaction.copies;
                     } else if (strcmp(transaction.type, "Return") == 0) {
-                        bookList->copies[i] -= transaction.copies;
+                        bookList->returnedCopies[i] += transaction.copies;
                     }
                     found = 1;
                     break;
@@ -79,18 +83,21 @@ BookList* getBookIDsForProfile(int profileID) {
                 if (bookList->count >= MAX_SIZE) {
                     // Reallocate if the current allocation is not enough
                     bookList->bookIDs = realloc(bookList->bookIDs, (bookList->count + MAX_SIZE) * sizeof(int));
-                    bookList->copies = realloc(bookList->copies, (bookList->count + MAX_SIZE) * sizeof(int));
-                    if (bookList->bookIDs == NULL || bookList->copies == NULL) {
+                    bookList->borrowedCopies = realloc(bookList->borrowedCopies, (bookList->count + MAX_SIZE) * sizeof(int));
+                    bookList->returnedCopies = realloc(bookList->returnedCopies, (bookList->count + MAX_SIZE) * sizeof(int));
+                    if (bookList->bookIDs == NULL || bookList->borrowedCopies == NULL || bookList->returnedCopies == NULL) {
                         printf("Memory allocation failed!\n");
                         free(bookList->bookIDs);
-                        free(bookList->copies);
+                        free(bookList->borrowedCopies);
+                        free(bookList->returnedCopies);
                         free(bookList);
                         fclose(fp);
                         return NULL;
                     }
                 }
                 bookList->bookIDs[bookList->count] = transaction.bookID;
-                bookList->copies[bookList->count] = (strcmp(transaction.type, "Borrow") == 0) ? transaction.copies : -transaction.copies;
+                bookList->borrowedCopies[bookList->count] = (strcmp(transaction.type, "Borrow") == 0) ? transaction.copies : 0;
+                bookList->returnedCopies[bookList->count] = (strcmp(transaction.type, "Return") == 0) ? transaction.copies : 0;
                 bookList->count++;
             }
         }
@@ -106,7 +113,7 @@ BookList* getBookIDsForProfile(int profileID) {
 }
 
 
-void printBookDetails(BookList *booklist,char str[]) {
+void printBookDetails(BookList *booklist, char str[]) {
     FILE *fp = fopen(booksDB, "r");
     if (fp == NULL) {
         printf("Error opening file!\n");
@@ -118,9 +125,8 @@ void printBookDetails(BookList *booklist,char str[]) {
     // Lock the critical section using Bookmutex
     pthread_mutex_lock(&Bookmutex);
 
-    // Acquire write lock
+    // Acquire read lock
     lockFile(fd, F_RDLCK);
-
 
     char line[MAX_SIZE * 4];
     Book book;
@@ -134,15 +140,18 @@ void printBookDetails(BookList *booklist,char str[]) {
     char msg[BUFFER_SIZE];
 
     fgets(line, sizeof(line), fp);
-    strcat(str,"Books borrowed:\n");
+    strcat(str, "Books borrowed:\n");
     while (fgets(line, sizeof(line), fp) != NULL) {
         sscanf(line, "%d,%[^,],%[^,],%d", &book.id, book.title, book.author, &book.copies);
 
         for (int i = 0; i < booklist->count; i++) {
-            if (book.id == booklist->bookIDs[i] && !foundBooks[i] && booklist->copies[i]>0) {
-
-                sprintf(msg,"ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author,booklist->copies[i]);
-                strcat(str,msg);
+            if (book.id == booklist->bookIDs[i] && !foundBooks[i]) {
+                int yetToReturn = booklist->borrowedCopies[i] - booklist->returnedCopies[i];
+                sprintf(msg, "ID: %d, Title: %s, Author: %s, Borrowed: %d, Returned: %d, Yet to Return: %d\n", 
+                        book.id, book.title, book.author, 
+                        booklist->borrowedCopies[i], booklist->returnedCopies[i], 
+                        yetToReturn);
+                strcat(str, msg);
                 foundBooks[i] = 1; // Mark this book ID as found
                 break;
             }
@@ -159,6 +168,7 @@ void printBookDetails(BookList *booklist,char str[]) {
 }
 
 
+
 void listMembers(Profile *profile,char prompt[]){
     if(profile->admin==1){
         readAndUpdateProfiles(profile->name,profile->password,0,1,prompt);
@@ -169,23 +179,21 @@ void listMembers(Profile *profile,char prompt[]){
 }
 
 
-void searchMember(Profile *profile,char Name[],char str[]){
+void searchMember(Profile *profile, char Name[], char str[]) {
     BookList *booklist;
-    if(profile->admin==1){
+    if (profile->admin == 1) {
         printf("User details:-\n");
-        strcpy(str,"User details:-\n");
+        strcpy(str, "User details:-\n");
         char *temp;
-        Profile *customer=readAndUpdateProfiles(Name,"",0,3,temp);
-        booklist=getBookIDsForProfile(customer->id);
-    }
-    else if(strcmp(profile->name,Name)==0){
+        Profile *customer = readAndUpdateProfiles(Name, "", 0, 3, temp);
+        booklist = getBookIDsForProfile(customer->id);
+    } else if (strcmp(profile->name, Name) == 0) {
         printf("User details:-\n");
-        strcpy(str,"User details:-\n");
-        booklist=getBookIDsForProfile(profile->id);
-    }
-    else{
+        strcpy(str, "User details:-\n");
+        booklist = getBookIDsForProfile(profile->id);
+    } else {
         printf("This user doesn't have permission to access this data\n");
         return;
     }
-    printBookDetails(booklist,str);
+    printBookDetails(booklist, str);
 }

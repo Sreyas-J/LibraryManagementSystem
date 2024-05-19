@@ -179,8 +179,6 @@ void *clientHandler(void *socket_desc) {
 
             if (strcmp(client_message, "VIEW") == 0) {
                 searchMember(profile, profile->name, prompt);
-                // strcat(prompt, "The book has succesfully been borrowed.\n");
-                // write(sock, prompt, strlen(prompt));
             }
 
             else if (strcmp(client_message, "BORROW") == 0) {
