@@ -258,9 +258,9 @@ void *clientHandler(void *socket_desc) {
         strcpy(prompt, "");
         while (1) {
             while (1) {
-                strcat(prompt, "MENU:-\n Add books (ADDbook)\n Search books (SEARCHbook)\n Modify books (UPDATEbook)\n Delete books (DELETEbook)\n List books (LISTbooks)\n Search members (SEARCHmember)\n List members (LISTmembers)\n Logout (LOGOUT)\n");
+                strcat(prompt, "MENU:-\n Add books (ADDbook)\n Search books (SEARCHbook)\n Modify books (UPDATEbook)\n Delete books (DELETEbook)\n List books (LISTbooks)\n Search members (SEARCHmember)\n List members (LISTmembers)\n List transactions (LISTtrans)\n Logout (LOGOUT)\n");
                 sendToClient(client_sock, prompt, prompt, client_message, client_message);
-                if (strcmp(client_message, "ADDbook") == 0 || strcmp(client_message, "SEARCHbook") == 0 || strcmp(client_message, "UPDATEbook") == 0 || strcmp(client_message, "DELETEbook") == 0 || strcmp(client_message, "LISTbooks") == 0 || strcmp(client_message, "SEARCHmember") == 0 || strcmp(client_message, "LISTmembers") == 0 || strcmp(client_message, "LOGOUT") == 0) break;
+                if (strcmp(client_message, "ADDbook") == 0 || strcmp(client_message, "SEARCHbook") == 0 || strcmp(client_message, "UPDATEbook") == 0 || strcmp(client_message, "DELETEbook") == 0 || strcmp(client_message, "LISTbooks") == 0 || strcmp(client_message, "SEARCHmember") == 0 || strcmp(client_message, "LISTmembers") == 0 || strcmp(client_message,"LISTtrans")==0 || strcmp(client_message, "LOGOUT") == 0) break;
                 memset(prompt, 0, BUFFER_SIZE);
             }
 
@@ -322,15 +322,20 @@ void *clientHandler(void *socket_desc) {
                 searchMember(profile, name, prompt);
             }
 
+            else if(strcmp(client_message,"LISTmembers")==0){
+                listMembers(profile,prompt);
+            }
+
+            else if(strcmp(client_message,"LISTtrans")==0){
+                transactionList(profile,prompt);
+            }
+
             else if (strcmp(client_message, "LOGOUT") == 0) {
                 free(profile);
                 close(client_sock);
                 return NULL;
             }
 
-            else if(strcmp(client_message,"LISTmembers")==0){
-                listMembers(profile,prompt);
-            }
         }
     }
 

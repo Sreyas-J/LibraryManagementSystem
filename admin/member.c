@@ -197,3 +197,32 @@ void searchMember(Profile *profile, char Name[], char str[]) {
     }
     printBookDetails(booklist, str);
 }
+
+
+void transactionList(Profile *profile, char str[]) {
+    if (profile->admin == 1) {
+        FILE *fp = fopen(transactionsDB, "r");
+        if (fp == NULL) {
+            printf("Error opening transactionsDB file!\n");
+            return;
+        }
+
+        int fd = fileno(fp);
+        pthread_mutex_lock(&Transactionmutex);
+        lockFile(fd, F_RDLCK);
+
+        char line[MAX_SIZE * 5];
+        char transactionDetails[MAX_SIZE * 5];
+        
+        strcat(str, "TransactionID,ProfileID,BookID,Copies,Transaction Type\n");
+        fgets(line, sizeof(line), fp);
+
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            strcat(str, line);
+        }
+
+        lockFile(fd, F_UNLCK);
+        pthread_mutex_unlock(&Transactionmutex);
+        fclose(fp);
+    }
+}
