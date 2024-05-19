@@ -104,7 +104,7 @@ Book *updateBookToCSV(char oldTitle[], char oldAuthor[], char newTitle[], char n
                 return book;
             }
         } else if (func == 2) {
-            if (strlen(oldTitle) > 1 && book->copies>0 && strcmp(book->title, oldTitle) == 0) {
+            if (strlen(oldTitle) > 0 && book->copies>0 && strcmp(book->title, oldTitle) == 0) {
                 // Release the lock
                 lockFile(fd, F_UNLCK);
 
@@ -115,7 +115,7 @@ Book *updateBookToCSV(char oldTitle[], char oldAuthor[], char newTitle[], char n
                 fclose(fp);
                 return book;
             }
-            if (strlen(oldAuthor) > 1 && book->copies>0 && strcmp(book->author, oldAuthor) == 0) {
+            if (strlen(oldAuthor) > 0 && book->copies>0 && strcmp(book->author, oldAuthor) == 0) {
                 // Release the lock
                 lockFile(fd, F_UNLCK);
 
@@ -195,16 +195,16 @@ void deleteBook(char title[],char author[],Profile *profile){
 Book *searchBook(char title[],char author[],Profile *profile){
     if(profile!=NULL){
         Book *book;
-        if(strlen(title)>1){
+        if(strlen(title)>0){
             book=updateBookToCSV(title,author,title,author,0,2);
         }
-        else if(strlen(author)>1){
+        else if(strlen(author)>0){
             book=updateBookToCSV(title,author,title,author,0,2);
         }
 
         if(book!=NULL){
-                printf("Found the book %s by %s with qty. %d\n",book->title,book->author,book->copies);
-            }
+            printf("Found the book %s by %s with qty. %d\n",book->title,book->author,book->copies);
+        }
         else{
             printf("No such book found...\n");
         }

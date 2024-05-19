@@ -16,7 +16,6 @@
 
 
 void *clientHandler(void *socket_desc);
-Profile *admin;
 int sock,read_size;
 
 
@@ -131,7 +130,7 @@ int main() {
 
 void *clientHandler(void *socket_desc) {
     sock = *(int*)socket_desc;
-    int state=1;
+    int state=1,copies;
     char client_message[BUFFER_SIZE];
     char name[BUFFER_SIZE], password[BUFFER_SIZE];
     char prompt[BUFFER_SIZE];
@@ -161,23 +160,64 @@ void *clientHandler(void *socket_desc) {
 
     
     if(profile->admin==0){
+        strcpy(prompt,"");
+
         while(1){
-            sendToClient("MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n",prompt,client_message,client_message);
-            if(strcmp(client_message,"BORROW")==0 || strcmp(client_message,"RETURN")==0 || strcmp(client_message,"VIEW")==0) break;
-        }
-        
-        if(strcmp(client_message,"VIEW")==0){
-            searchMember(profile,profile->name,prompt);
-            write(sock, prompt, strlen(prompt));
+            while(1){
+                strcat(prompt,"MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n Logout (LOGOUT)\n");
+                sendToClient(prompt,prompt,client_message,client_message);
+                if(strcmp(client_message,"BORROW")==0 || strcmp(client_message,"RETURN")==0 || strcmp(client_message,"VIEW")==0 || (strcmp(client_message,"LOGOUT"))) break;
+            }
+            
+            if(strcmp(client_message,"VIEW")==0){
+                searchMember(profile,profile->name,prompt);
+                write(sock, prompt, strlen(prompt));
+            }
+
+            else if(strcmp(client_message,"BORROW")==0){
+                copies=-1;
+                Book *book=malloc(sizeof(Book));
+                book=NULL;
+                Profile *master=malloc(sizeof(Profile));
+                master=NULL;
+
+                memset(prompt,0,BUFFER_SIZE);
+                memset(name,0,BUFFER_SIZE);
+                memset(password,0,BUFFER_SIZE);
+
+                printBooks(prompt);
+
+                while(book==NULL){
+                    strcat(prompt,"Give a valid title of the book you choose to borrow.\n");
+                    // write(sock, prompt, strlen(prompt));
+                    sendToClient(prompt,prompt,client_message,name);
+
+                    while(copies<0){
+                        sendToClient("Enter a valid no. of copies you choose to borrow.\n",prompt,client_message,client_message);
+                        copies=atoi(client_message);
+                    }
+
+                    book= searchBook(name,"",profile);
+
+                    while(master==NULL){
+                        sendToClient("Enter a valid admin username.\n",prompt,client_message,name);
+                        sendToClient("Enter valid password of the admin.\n",prompt,client_message,password);
+                        master=login(name,password);
+                        if(master->admin==0) master=NULL;
+                    }
+
+                }
+                
+                book=borrowBook(book,profile,master,copies);
+                strcpy(prompt,"The book has succesfully been borrowed.\n");
+            }
+
+            else if(strcmp(client_message,"LOGOUT")==0){
+                free(profile);
+                return;
+            }
         }
 
-        else if(strcmp(client_message,"BORROW")==0){
-            memset(prompt,0,BUFFER_SIZE);
-            printBooks(prompt);
-            write(sock, prompt, strlen(prompt));
-        }
-
-        memset(client_message, 0, BUFFER_SIZE);
     }
     else{
         sendToClient("MENU:-\n Add books (ADDbook)\n Search books (SEARCHbook)\n Modify books (UPDATEbook)\n Delete books (DELETEbook)\n List books (LISTbooks)\n Search members (SEARCHmember)\n List members (LISTmembers)\n",prompt,client_message,client_message);
