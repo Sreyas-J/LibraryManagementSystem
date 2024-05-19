@@ -1,1 +1,2 @@
 TransactionID,ProfileID,BookID,Copies,Transaction Type
+1,2,1,2,Borrow

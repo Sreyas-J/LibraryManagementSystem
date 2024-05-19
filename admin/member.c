@@ -139,7 +139,7 @@ void printBookDetails(BookList *booklist,char str[]) {
         sscanf(line, "%d,%[^,],%[^,],%d", &book.id, book.title, book.author, &book.copies);
 
         for (int i = 0; i < booklist->count; i++) {
-            if (book.id == booklist->bookIDs[i] && !foundBooks[i]) {
+            if (book.id == booklist->bookIDs[i] && !foundBooks[i] && booklist->copies[i]>0) {
 
                 sprintf(msg,"ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author,booklist->copies[i]);
                 strcat(str,msg);
@@ -159,9 +159,9 @@ void printBookDetails(BookList *booklist,char str[]) {
 }
 
 
-void listMembers(Profile *profile){
+void listMembers(Profile *profile,char prompt[]){
     if(profile->admin==1){
-        readAndUpdateProfiles(profile->name,profile->password,0,1);
+        readAndUpdateProfiles(profile->name,profile->password,0,1,prompt);
     }
     else{
         printf("User doesn't have the required permissions.\n");
@@ -174,7 +174,8 @@ void searchMember(Profile *profile,char Name[],char str[]){
     if(profile->admin==1){
         printf("User details:-\n");
         strcpy(str,"User details:-\n");
-        Profile *customer=readAndUpdateProfiles(Name,"",0,3);
+        char *temp;
+        Profile *customer=readAndUpdateProfiles(Name,"",0,3,temp);
         booklist=getBookIDsForProfile(customer->id);
     }
     else if(strcmp(profile->name,Name)==0){

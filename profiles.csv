@@ -1,3 +1,4 @@
 ID,Name,Password,Admin Status,No. of books Borrowed
 1,admin,admin,1,0
-2,s,j,0,0
+2,s,j,0,2
+3,r,a,0,0

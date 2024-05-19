@@ -2,6 +2,7 @@
 #include "../admin/book.h"
 #include "../admin/member.h"
 #include "../supportFunctions/support.h"
+#include "../socket/server.h"
 
 #include <string.h>
 #include <fcntl.h>
@@ -43,7 +44,7 @@ void writeProfileToCSV(Profile profile) {
 }
 
 
-Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func) {
+Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func,char prompt[]) {
     FILE *fp;
     int fd;
     fp = fopen(profilesDB, "r+");
@@ -66,11 +67,12 @@ Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func)
 
     long int pos = 0;
 
+    char temp[BUFFER_SIZE];
     if(func==1){ 
-
-        printf("\nMEMBERS DETAILS:-\nProfileID      Name                  No.of Books Borrowed\n");
-        
+        sprintf(prompt,"\nMEMBERS DETAILS:-\nProfileID      Name                  No.of Books Borrowed\n");
     }
+
+    fgets(line, sizeof(line), fp);
 
     while (fgets(line, sizeof(line), fp) != NULL) {
         int profileId, profileBorrowed, profileAdmin;
@@ -78,7 +80,10 @@ Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func)
 
 
         sscanf(line, "%d,%[^,],%[^,],%d,%d", &profileId, profileName, profilePassword, &profileAdmin, &profileBorrowed);
-        if(func==1 && profileAdmin==0) printf("%d              %s                     %d\n",profileId,profileName,profileBorrowed);
+        if(func==1 && profileAdmin==0){
+            sprintf(temp,"%d              %s                     %d\n",profileId,profileName,profileBorrowed);
+            strcat(prompt,temp);
+        }
 
         if ((strcmp(profileName, Name) == 0) && ((strcmp(profilePassword,password)==0 && (func==0||func==2))||(func==3))) {
             foundProfile = malloc(sizeof(Profile));
@@ -129,7 +134,8 @@ Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func)
 
 
 Profile *login(char Name[], char password[]){
-    return readAndUpdateProfiles(Name,password,0,0);
+    char *temp;
+    return readAndUpdateProfiles(Name,password,0,0,temp);
 }
 
 
