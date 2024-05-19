@@ -184,11 +184,11 @@ void searchMember(Profile *profile, char Name[], char str[]) {
     if (profile->admin == 1) {
         printf("User details:-\n");
         strcpy(str, "User details:-\n");
-        char *temp;
+        char temp[BUFFER_SIZE];
         Profile *customer = readAndUpdateProfiles(Name, "", 0, 3, temp);
         booklist = getBookIDsForProfile(customer->id);
     } else if (strcmp(profile->name, Name) == 0) {
-        printf("User details:-\n");
+        printf("User details sent\n");
         strcpy(str, "User details:-\n");
         booklist = getBookIDsForProfile(profile->id);
     } else {
@@ -212,7 +212,6 @@ void transactionList(Profile *profile, char str[]) {
         lockFile(fd, F_RDLCK);
 
         char line[MAX_SIZE * 5];
-        char transactionDetails[MAX_SIZE * 5];
         
         strcat(str, "TransactionID,ProfileID,BookID,Copies,Transaction Type\n");
         fgets(line, sizeof(line), fp);

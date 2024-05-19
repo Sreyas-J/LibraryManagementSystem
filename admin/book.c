@@ -252,12 +252,15 @@ Book *writeTransactionToCSV(Book *book,Profile *profile,int copies,char type[]){
 
     if(strcmp(type,"Borrow")==0){
         book=modifyBook(book->title,book->author,book->title,book->author,book->copies-copies,profile,1);
-        profile=readAndUpdateProfiles(profile->name,profile->password,copies,2);
+        char temp[BUFFER_SIZE];
+        profile=readAndUpdateProfiles(profile->name,profile->password,copies,2,temp);
     }
 
     else if(strcmp(type,"Return")==0){
         book=modifyBook(book->title,book->author,book->title,book->author,book->copies+copies,profile,1);
-        profile=readAndUpdateProfiles(profile->name,profile->password,-copies,2);
+        char temp[BUFFER_SIZE];
+
+        profile=readAndUpdateProfiles(profile->name,profile->password,-copies,2,temp);
     }
 
     return book;
@@ -274,15 +277,18 @@ Book *borrowBook(Book *book,Profile *customer,Profile *profile,int copies){
                 printf("%s has successfully borrowed %d copies of %s by %s.\n",customer->name,copies,book->title,book->author);
             }
             else{
+                book=NULL;
                 printf("The library has only %d copies of %s by %s. So, can't lend %d copies.\n",book->copies,book->title,book->author,copies);
             }
             
         }
         else{
+            book=NULL;
             printf("This user has already borrowed %d books and the limit on borrowed books at any moment is 3-> So can't borrow %d books.\n",customer->borrowed,copies);
         }
     }
     else{
+        book=NULL;
         printf("You can only borrow books in the presence of an admin. So, can't borrow now.\n");
     }
     return book;

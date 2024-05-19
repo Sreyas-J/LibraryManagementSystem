@@ -100,7 +100,7 @@ Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func,
             if(func==0){
                   // Allocate memory for foundProfile
 
-                printf("Profile found %s %d.\n",profileName,profileAdmin);
+                printf("Profile found %s.\n",profileName);
             }
             else if(func==2){
                 pos = ftell(fp) - strlen(line);

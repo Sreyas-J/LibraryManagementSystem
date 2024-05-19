@@ -216,7 +216,9 @@ void *clientHandler(void *socket_desc) {
                 }
 
                 book = borrowBook(book, profile, master, copies);
-                strcpy(prompt, "The book has succesfully been borrowed.\n");
+
+                if(book==NULL) strcpy(prompt,"Error occured. Couldn't borrow book.\n");
+                else strcpy(prompt, "The book has succesfully been borrowed.\n");
             }
 
             else if (strcmp(client_message, "RETURN") == 0) {
