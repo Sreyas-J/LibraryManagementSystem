@@ -171,9 +171,9 @@ void *clientHandler(void *socket_desc) {
 
         while (1) {
             while (1) {
-                strcat(prompt, "MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n Logout (LOGOUT)\n");
+                strcat(prompt, "MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n Delete Account (DEL)\n Logout (LOGOUT)\n");
                 sendToClient(client_sock, prompt, prompt, client_message, client_message);
-                if (strcmp(client_message, "BORROW") == 0 || strcmp(client_message, "RETURN") == 0 || strcmp(client_message, "VIEW") == 0 || strcmp(client_message, "LOGOUT") == 0) break;
+                if (strcmp(client_message, "BORROW") == 0 || strcmp(client_message, "RETURN") == 0 || strcmp(client_message, "VIEW") == 0 || strcmp(client_message,"DEL")==0 || strcmp(client_message, "LOGOUT") == 0) break;
                 memset(prompt, 0, BUFFER_SIZE);
             }
 
@@ -246,6 +246,15 @@ void *clientHandler(void *socket_desc) {
                 sendToClient(client_sock, "Enter a valid no. of copies you choose to return.\n", prompt, client_message, client_message);
                 book = returnBook(book, profile, master, atoi(client_message));
                 strcpy(prompt, "The book has succesfully been returned.\n");
+            }
+
+            else if(strcmp(client_message,"DEL")==0){
+                int f=deleteMember(profile->name,profile);
+                if(f==0) strcpy(prompt,"Error occured. Couldn't delete account.\n");
+                else strcpy(prompt,"Account has been deleted.\n");
+                free(profile);
+                close(client_sock);
+                return NULL;
             }
 
             else if (strcmp(client_message, "LOGOUT") == 0) {

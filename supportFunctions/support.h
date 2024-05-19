@@ -14,6 +14,7 @@ extern int nextBookId;
 extern char profilesDB[];
 extern char booksDB[];
 extern char transactionsDB[];
+extern char TEMP_DB[];
 
 typedef struct Book {
     int id;

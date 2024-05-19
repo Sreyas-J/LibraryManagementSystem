@@ -52,7 +52,7 @@ int main() {
             return 1;
         }
 
-        if(strcmp(message,"LOGOUT\n")==0){
+        if(strcmp(message,"LOGOUT\n")==0 || strcmp(message,"DEL\n")==0){
             break;
         }
 

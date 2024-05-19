@@ -225,3 +225,67 @@ void transactionList(Profile *profile, char str[]) {
         fclose(fp);
     }
 }
+
+
+int deleteMember(char name[], Profile *profile) {
+    int found = 0;
+
+    if (profile->admin == 1 || strcmp(profile->name, name) == 0) {
+        FILE *fp = fopen(profilesDB, "r");
+        if (fp == NULL) {
+            printf("Error opening profilesDB file!\n");
+            return found;
+        }
+
+        int fd = fileno(fp);
+        pthread_mutex_lock(&mutex);
+        lockFile(fd, F_RDLCK);
+
+        FILE *temp_fp = fopen(TEMP_DB, "w");
+        if (temp_fp == NULL) {
+            printf("Error opening temporary file!\n");
+            fclose(fp);
+            pthread_mutex_unlock(&mutex);
+            return found;
+        }
+
+        char line[MAX_SIZE * 5];
+        Profile customer;
+
+        // Read the header line and write it to the temporary file
+        if (fgets(line, sizeof(line), fp) != NULL) {
+            fputs(line, temp_fp);
+        }
+
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            sscanf(line, "%d,%[^,],%[^,],%d,%d", &customer.id, customer.name, customer.password, &customer.admin, &customer.borrowed);
+            if (strcmp(customer.name, name) != 0) {
+                fputs(line, temp_fp);
+            } else {
+                found = 1;
+            }
+        }
+
+        fclose(fp);
+        fclose(temp_fp);
+
+        if (found) {
+            if (remove(profilesDB) != 0) {
+                printf("Error removing original profilesDB file!\n");
+            } else if (rename(TEMP_DB, profilesDB) != 0) {
+                printf("Error renaming temporary file to profilesDB!\n");
+            } else {
+                printf("Member '%s' deleted successfully.\n", name);
+            }
+        } else {
+            printf("Member '%s' not found in profilesDB.\n", name);
+            remove(TEMP_DB);
+        }
+
+        pthread_mutex_unlock(&mutex);
+    } else {
+        printf("The user doesn't have the permission.\n");
+    }
+
+    return found;
+}

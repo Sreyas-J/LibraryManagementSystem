@@ -11,6 +11,7 @@ int nextTransactionId=1;
 char profilesDB[] = "../profiles.csv";
 char booksDB[]="../books.csv";
 char transactionsDB[]="../transaction.csv";
+char TEMP_DB[]="../temp.csv";
 
 void lockFile(int fd, int lockType) {
     struct flock lock;
