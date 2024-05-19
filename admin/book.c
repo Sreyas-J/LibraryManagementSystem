@@ -2,6 +2,7 @@
 #include "member.h"
 #include "../UserAuthentication/profile.h"
 #include "../supportFunctions/support.h"
+#include "../socket/server.h"
 
 #include<string.h>
 #include<fcntl.h>
@@ -10,6 +11,37 @@
 #include <pthread.h>
 
 pthread_mutex_t Bookmutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+void printBooks(char str[]) {
+    FILE *file = fopen(booksDB, "r");
+    if (file == NULL) {
+        perror("Could not open file");
+        return;
+    }
+
+    char line[MAX_SIZE];
+    // Skip the header line
+    if (fgets(line, sizeof(line), file) == NULL) {
+        perror("Could not read header");
+        fclose(file);
+        return;
+    }
+
+    strcpy(str,"Books:-\n");
+    char temp[BUFFER_SIZE];
+    fgets(line, sizeof(line), file);
+    while (fgets(line, sizeof(line), file)) {
+        Book book;
+        sscanf(line, "%d,%[^,],%[^,],%d", &book.id, book.title, book.author, &book.copies);
+
+        // Print the book details
+        sprintf(temp,"ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author, book.copies);
+        strcat(str,temp);
+    }
+
+    fclose(file);
+}
 
 
 Book *updateBookToCSV(char oldTitle[], char oldAuthor[], char newTitle[], char newAuthor[], int newCopies, int func) {
@@ -213,12 +245,12 @@ Book *writeTransactionToCSV(Book *book,Profile *profile,int copies,char type[]){
 
     if(strcmp(type,"Borrow")==0){
         book=modifyBook(book->title,book->author,book->title,book->author,book->copies-copies,profile,1);
-        profile=readAndUpdateProfiles(profile->name,profile->admin,profile->password,copies,2);
+        profile=readAndUpdateProfiles(profile->name,profile->password,copies,2);
     }
 
     else if(strcmp(type,"Return")==0){
         book=modifyBook(book->title,book->author,book->title,book->author,book->copies+copies,profile,1);
-        profile=readAndUpdateProfiles(profile->name,profile->admin,profile->password,-copies,2);
+        profile=readAndUpdateProfiles(profile->name,profile->password,-copies,2);
     }
 
     return book;

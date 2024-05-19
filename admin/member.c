@@ -109,7 +109,7 @@ void printBookDetails(BookList *booklist,char str[]) {
         fclose(fp);
         return;
     }
-    char msg[]="";
+    char *msg;
 
     fgets(line, sizeof(line), fp);
     printf("Books borrowed:\n");
@@ -139,7 +139,7 @@ void printBookDetails(BookList *booklist,char str[]) {
 
 void listMembers(Profile *profile){
     if(profile->admin==1){
-        readAndUpdateProfiles(profile->name,profile->admin,profile->password,0,1);
+        readAndUpdateProfiles(profile->name,profile->password,0,1);
     }
     else{
         printf("User doesn't have the required permissions.\n");
@@ -152,7 +152,7 @@ void searchMember(Profile *profile,char Name[],char str[]){
     if(profile->admin==1){
         printf("User details:-\n");
         strcpy(str,"User details:-\n");
-        Profile *customer=readAndUpdateProfiles(Name,0,"",0,3);
+        Profile *customer=readAndUpdateProfiles(Name,"",0,3);
         booklist=getBookIDsForProfile(customer->id);
     }
     else if(strcmp(profile->name,Name)==0){

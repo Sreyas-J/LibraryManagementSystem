@@ -43,7 +43,7 @@ void writeProfileToCSV(Profile profile) {
 }
 
 
-Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies,int func) {
+Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func) {
     FILE *fp;
     int fd;
     fp = fopen(profilesDB, "r+");
@@ -67,12 +67,9 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
     long int pos = 0;
 
     if(func==1){ 
-        if(admin==0){
-            return NULL; 
-        }
-        else{
-            printf("\nMEMBERS DETAILS:-\nProfileID      Name                  No.of Books Borrowed\n");
-        }
+
+        printf("\nMEMBERS DETAILS:-\nProfileID      Name                  No.of Books Borrowed\n");
+        
     }
 
     while (fgets(line, sizeof(line), fp) != NULL) {
@@ -83,7 +80,7 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
         sscanf(line, "%d,%[^,],%[^,],%d,%d", &profileId, profileName, profilePassword, &profileAdmin, &profileBorrowed);
         if(func==1 && profileAdmin==0) printf("%d              %s                     %d\n",profileId,profileName,profileBorrowed);
 
-        if ((strcmp(profileName, Name) == 0) && ((strcmp(profilePassword,password)==0 && profileAdmin==admin && (func==0||func==2))||(func==3))) {
+        if ((strcmp(profileName, Name) == 0) && ((strcmp(profilePassword,password)==0 && (func==0||func==2))||(func==3))) {
             foundProfile = malloc(sizeof(Profile));
             if (foundProfile == NULL) {
                 printf("Memory allocation failed!\n");
@@ -131,8 +128,8 @@ Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copie
 }
 
 
-Profile *login(char Name[], int admin, char password[]){
-    return readAndUpdateProfiles(Name,admin,password,0,0);
+Profile *login(char Name[], char password[]){
+    return readAndUpdateProfiles(Name,password,0,0);
 }
 
 

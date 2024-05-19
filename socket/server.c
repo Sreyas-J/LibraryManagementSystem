@@ -1,6 +1,7 @@
 #include "../UserAuthentication/profile.h"
 #include "../admin/member.h"
 #include "../admin/book.h"
+#include "server.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,10 +13,27 @@
 
 #define PORT 8080
 #define MAX_CLIENTS 100
-#define BUFFER_SIZE 1024
+
 
 void *clientHandler(void *socket_desc);
 Profile *admin;
+int sock,read_size;
+
+
+void sendToClient(char msg[],char prompt[],char client_message[],char var[]){
+    while (1) {
+        strcpy(prompt, msg);
+        write(sock, prompt, strlen(prompt));
+        memset(client_message, 0, BUFFER_SIZE);
+        read_size = recv(sock, client_message, BUFFER_SIZE, 0);
+        client_message[read_size - 1] = '\0'; // Remove newline character
+        if (strlen(client_message) > 0) {
+            strcpy(var, client_message);
+            break;
+        }
+    }
+}
+
 
 int main() {
     FILE *fp = fopen(profilesDB, "w");
@@ -112,85 +130,66 @@ int main() {
 }
 
 void *clientHandler(void *socket_desc) {
-    int sock = *(int*)socket_desc;
-    int read_size;
+    sock = *(int*)socket_desc;
     int state=1;
     char client_message[BUFFER_SIZE];
     char name[BUFFER_SIZE], password[BUFFER_SIZE];
     char prompt[BUFFER_SIZE];
 
-    strcpy(prompt, "Login/SignUp:\n");
-    write(sock, prompt, strlen(prompt));
-    
-    memset(client_message, 0, BUFFER_SIZE);
+    while(1){
+        sendToClient("Login/SignUp:\n",prompt,client_message,client_message);
+        if(strcmp(client_message,"SignUp")==0){
+            state=0;
+            break;
+        }
+        else if(strcmp(client_message,"Login")==0) break;
+    }
 
     Profile *profile=NULL;
 
-    read_size = recv(sock, client_message, BUFFER_SIZE, 0);
-    if (read_size <= 0) {
-        close(sock);
-        return 0;
-    }
-    client_message[read_size - 1] = '\0'; // Remove newline character
-    if(strcmp(client_message, "SignUp") == 0) state=0;
     while(profile==NULL){
-        while (1) {
-            strcpy(prompt, "Enter a valid username:\n");
-            write(sock, prompt, strlen(prompt));
-            memset(client_message, 0, BUFFER_SIZE);
-            read_size = recv(sock, client_message, BUFFER_SIZE, 0);
-            client_message[read_size - 1] = '\0'; // Remove newline character
-            if (strlen(client_message) > 0) {
-                strcpy(name, client_message);
-                break;
-            }
-        }
-
-        while (1) {
-            strcpy(prompt, "Enter a valid password:\n");
-            write(sock, prompt, strlen(prompt));
-            memset(client_message, 0, BUFFER_SIZE);
-            read_size = recv(sock, client_message, BUFFER_SIZE, 0);
-            client_message[read_size - 1] = '\0'; // Remove newline character
-            if (strlen(client_message) > 0) {
-                strcpy(password, client_message);
-                break;
-            }
-        }
+        sendToClient("Enter a valid username:\n",prompt,client_message,name);
+        sendToClient("Enter a valid password:\n",prompt,client_message,password);
 
         if (state==0) {
             // SignUp process
             createProfile(name, 0, password);
         }
 
-        profile = login(name,0,password);
+        profile = login(name,password);
     }
 
-    strcpy(prompt, "User logged in!\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n");
     
-    while(1){
-        write(sock, prompt, strlen(prompt));
-        memset(client_message, 0, BUFFER_SIZE);
-
-        read_size = recv(sock, client_message, BUFFER_SIZE, 0);
-        client_message[read_size - 1] = '\0';
-
-        if(strlen(client_message) > 0){
+    if(profile->admin==0){
+        while(1){
+            sendToClient("MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n",prompt,client_message,client_message);
             if(strcmp(client_message,"BORROW")==0 || strcmp(client_message,"RETURN")==0 || strcmp(client_message,"VIEW")==0) break;
         }
-        strcpy(prompt,"Enter a valid input\n");
-    }
-    
-    if(strcmp(client_message,"VIEW")==0){
-        searchMember(profile,profile->name,prompt);
-        write(sock, prompt, strlen(prompt));
+        
+        if(strcmp(client_message,"VIEW")==0){
+            searchMember(profile,profile->name,prompt);
+            write(sock, prompt, strlen(prompt));
+        }
+
+        else if(strcmp(client_message,"BORROW")==0){
+            memset(prompt,0,BUFFER_SIZE);
+            printBooks(prompt);
+            write(sock, prompt, strlen(prompt));
+        }
+
         memset(client_message, 0, BUFFER_SIZE);
     }
+    else{
+        sendToClient("MENU:-\n Add books (ADDbook)\n Search books (SEARCHbook)\n Modify books (UPDATEbook)\n Delete books (DELETEbook)\n List books (LISTbooks)\n Search members (SEARCHmember)\n List members (LISTmembers)\n",prompt,client_message,client_message);
+        
+        if(strcmp(client_message,"ADDbook")==0){
+            sendToClient("Kindly enter a valid title of book.\n",prompt,client_message,name);
+            sendToClient("Kindly enter the valid author name of the book.\n",prompt,client_message,password);
+            sendToClient("Kindly enter the no. of copies added.\n",prompt,client_message,client_message);
 
-    else if(strcmp(client_message,"BORROW")==0){
-        // borrowBook();
+            Book *book=addBook(name,password,profile,atoi(client_message));
+        }
     }
-
     // Free the socket pointer
     close(sock);
     return 0;

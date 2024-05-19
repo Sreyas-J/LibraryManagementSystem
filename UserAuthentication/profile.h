@@ -3,8 +3,8 @@
 #include "../supportFunctions/support.h"
 
 void writeProfileToCSV(Profile profile);
-Profile *readAndUpdateProfiles(char Name[], int admin, char password[],int copies,int func);
-Profile *login(char Name[], int admin, char password[]);
+Profile *readAndUpdateProfiles(char Name[], char password[],int copies,int func);
+Profile *login(char Name[], char password[]);
 void createProfile(char Name[], int admin,char password[]);
 
 #endif
