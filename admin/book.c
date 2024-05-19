@@ -36,8 +36,10 @@ void printBooks(char str[]) {
         sscanf(line, "%d,%[^,],%[^,],%d", &book.id, book.title, book.author, &book.copies);
 
         // Print the book details
-        sprintf(temp,"ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author, book.copies);
-        strcat(str,temp);
+        if(book.copies>0){
+            sprintf(temp,"ID: %d, Title: %s, Author: %s, Copies: %d\n", book.id, book.title, book.author, book.copies);
+            strcat(str,temp);
+        }
     }
 
     fclose(file);
@@ -192,9 +194,11 @@ void deleteBook(char title[],char author[],Profile *profile){
 }
 
 
-Book *searchBook(char title[],char author[],Profile *profile){
+Book *searchBook(char title[],char author[],Profile *profile,char prompt[]){
+    char temp[BUFFER_SIZE];
     if(profile!=NULL){
         Book *book;
+
         if(strlen(title)>0){
             book=updateBookToCSV(title,author,title,author,0,2);
         }
@@ -203,15 +207,18 @@ Book *searchBook(char title[],char author[],Profile *profile){
         }
 
         if(book!=NULL){
-            printf("Found the book %s by %s with qty. %d\n",book->title,book->author,book->copies);
+            sprintf(temp,"Found the book %s by %s with qty. %d\n",book->title,book->author,book->copies);
+            strcpy(prompt,temp);
         }
         else{
-            printf("No such book found...\n");
+            sprintf(temp,"No such book found...\n");
+            strcpy(prompt,temp);
         }
             return book;
         }
     else{
-        printf("This user doesn't have the required permisions\n");
+        sprintf(temp,"This user doesn't have the required permisions\n");
+        strcpy(prompt,temp);
     }
     return NULL;
 }

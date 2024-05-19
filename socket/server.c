@@ -167,10 +167,10 @@ void *clientHandler(void *socket_desc) {
                 strcat(prompt,"MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n Logout (LOGOUT)\n");
                 sendToClient(prompt,prompt,client_message,client_message);
                 if(strcmp(client_message,"BORROW")==0 || strcmp(client_message,"RETURN")==0 || strcmp(client_message,"VIEW")==0 || strcmp(client_message,"LOGOUT")==0) break;
+                memset(prompt,0,BUFFER_SIZE);
             }
             
             if(strcmp(client_message,"VIEW")==0){
-                memset(prompt,0,BUFFER_SIZE);
                 searchMember(profile,profile->name,prompt);
                 // strcat(prompt,"The book has succesfully been borrowed.\n");
                 // write(sock, prompt, strlen(prompt));
@@ -198,8 +198,8 @@ void *clientHandler(void *socket_desc) {
                         sendToClient("Enter a valid no. of copies you choose to borrow.\n",prompt,client_message,client_message);
                         copies=atoi(client_message);
                     }
-
-                    book= searchBook(name,"",profile);
+                    char temp[BUFFER_SIZE];
+                    book= searchBook(name,"",profile,temp);
 
                     while(master==NULL){
                         sendToClient("Enter a valid admin username.\n",prompt,client_message,name);
@@ -228,11 +228,12 @@ void *clientHandler(void *socket_desc) {
                         sendToClient("Enter a valid admin username.\n",prompt,client_message,name);
                         sendToClient("Enter the admin password.\n",prompt,client_message,password);
                         master=login(name,password);
-                        if(master->admin==0) master==NULL;
+                        if(master->admin==0) master=NULL;
                     }
 
                     sendToClient("Enter the book name you choose to return.\n",prompt,client_message,client_message);
-                    book=searchBook(client_message,"",master);
+                    char temp[BUFFER_SIZE];
+                    book=searchBook(client_message,"",master,temp);
                 }
 
                 sendToClient("Enter a valid no. of copies you choose to return.\n",prompt,client_message,client_message);
@@ -249,14 +250,76 @@ void *clientHandler(void *socket_desc) {
 
     }
     else{
-        sendToClient("MENU:-\n Add books (ADDbook)\n Search books (SEARCHbook)\n Modify books (UPDATEbook)\n Delete books (DELETEbook)\n List books (LISTbooks)\n Search members (SEARCHmember)\n List members (LISTmembers)\n",prompt,client_message,client_message);
+        Book *book;
+        strcpy(prompt,"");
+        while(1){
+            while(1){
+                strcat(prompt,"MENU:-\n Add books (ADDbook)\n Search books (SEARCHbook)\n Modify books (UPDATEbook)\n Delete books (DELETEbook)\n List books (LISTbooks)\n Search members (SEARCHmember)\n List members (LISTmembers)\n Logout (LOGOUT)\n");
+                sendToClient(prompt,prompt,client_message,client_message);
+                if(strcmp(client_message,"ADDbook")==0 || strcmp(client_message,"SEARCHbook")==0 || strcmp(client_message,"UPDATEbook")==0 || strcmp(client_message,"DELETEbook")==0 || strcmp(client_message,"LISTbooks")==0 || strcmp(client_message,"SEARCHmember")==0 || strcmp(client_message,"LISTmembers")==0 || strcmp(client_message,"LOGOUT")==0) break;
+                memset(prompt,0,BUFFER_SIZE);
+            }
         
-        if(strcmp(client_message,"ADDbook")==0){
-            sendToClient("Kindly enter a valid title of book.\n",prompt,client_message,name);
-            sendToClient("Kindly enter the valid author name of the book.\n",prompt,client_message,password);
-            sendToClient("Kindly enter the no. of copies added.\n",prompt,client_message,client_message);
+            if(strcmp(client_message,"ADDbook")==0){
+                sendToClient("Kindly enter a valid title of book.\n",prompt,client_message,name);
+                sendToClient("Kindly enter the valid author name of the book.\n",prompt,client_message,password);
+                sendToClient("Kindly enter the no. of copies added.\n",prompt,client_message,client_message);
 
-            Book *book=addBook(name,password,profile,atoi(client_message));
+                book=addBook(name,password,profile,atoi(client_message));
+            }
+
+            else if(strcmp(client_message,"SEARCHbook")==0){
+                sendToClient("Kindly enter a valid title of a book.\n",prompt,client_message,name);
+                book=searchBook(name,"",profile,prompt);
+            }
+
+            else if(strcmp(client_message,"UPDATEbook")==0){
+                char temp[BUFFER_SIZE];
+                memset(name,0,BUFFER_SIZE);
+                memset(password,0,BUFFER_SIZE);
+                book=NULL;
+
+                sendToClient("Kindly enter a valid title of a book.\n",prompt,client_message,name);
+                book=searchBook(name,"",profile,temp);
+
+                if(book==NULL){
+                    strcpy(prompt,"No such book exists...\n");
+                }
+                else{
+                    sendToClient("Kindly enter a valid new topic name.\n",prompt,client_message,name);
+                    sendToClient("Kindly enter a valid new author name.\n",prompt,client_message,password);
+                    sendToClient("Kindly enter a valid no. of copies.\n",prompt,client_message,client_message);
+                    book=modifyBook(book->title,book->author,name,password,atoi(client_message),profile,0);
+                }
+            }
+
+            else if(strcmp(client_message,"DELETEbook")==0){
+                memset(name,0,BUFFER_SIZE);
+                book=NULL;
+
+                sendToClient("Kindly enter a valid title of a book to be deleted.\n",prompt,client_message,name);
+                char temp[BUFFER_SIZE];
+                book=searchBook(name,"",profile,temp);
+
+                if(book==NULL){
+                    strcpy(prompt,"No such book exists...\n");
+                }
+                else{
+                    deleteBook(book->title,book->author,profile);
+                    sprintf(prompt,"Successfully deleted %s by %s.\n",book->title,book->author);
+                }
+            }
+
+            else if(strcmp(client_message,"LISTbooks")==0){
+                memset(prompt,0,BUFFER_SIZE);
+                printBooks(prompt);
+            }
+
+            else if (strcmp(client_message, "LOGOUT") == 0) {
+                free(profile);
+                close(sock);
+                return NULL;
+            }
         }
     }
     // Free the socket pointer
