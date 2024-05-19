@@ -2,6 +2,7 @@
 #include "../supportFunctions/support.h"
 #include "../UserAuthentication/profile.h"
 #include "../admin/book.h"
+#include "../socket/server.h"
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -44,6 +45,7 @@ BookList* getBookIDsForProfile(int profileID) {
 
     bookList->bookIDs = malloc(MAX_SIZE * sizeof(int));  // Initial allocation for 100 book IDs
     bookList->copies = malloc(MAX_SIZE * sizeof(int));
+
     if (bookList->bookIDs == NULL) {
         printf("Memory allocation failed!\n");
         free(bookList);
@@ -109,10 +111,10 @@ void printBookDetails(BookList *booklist,char str[]) {
         fclose(fp);
         return;
     }
-    char *msg;
+    char msg[BUFFER_SIZE];
 
     fgets(line, sizeof(line), fp);
-    printf("Books borrowed:\n");
+    strcat(str,"Books borrowed:\n");
     while (fgets(line, sizeof(line), fp) != NULL) {
         sscanf(line, "%d,%[^,],%[^,],%d", &book.id, book.title, book.author, &book.copies);
 

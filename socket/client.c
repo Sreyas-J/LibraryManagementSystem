@@ -45,11 +45,17 @@ int main() {
         printf("%s",server_reply);
         fgets(message, BUFFER_SIZE, stdin);
 
+
         // Send some data
         if (send(sock, message, strlen(message), 0) < 0) {
             printf("Send failed\n");
             return 1;
         }
+
+        if(strcmp(message,"LOGOUT\n")==0){
+            break;
+        }
+
         memset(server_reply, 0, BUFFER_SIZE);
     }
 

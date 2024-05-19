@@ -166,12 +166,14 @@ void *clientHandler(void *socket_desc) {
             while(1){
                 strcat(prompt,"MENU:-\n Borrow books (BORROW)\n Return books (RETURN)\n View Profile (VIEW)\n Logout (LOGOUT)\n");
                 sendToClient(prompt,prompt,client_message,client_message);
-                if(strcmp(client_message,"BORROW")==0 || strcmp(client_message,"RETURN")==0 || strcmp(client_message,"VIEW")==0 || (strcmp(client_message,"LOGOUT"))) break;
+                if(strcmp(client_message,"BORROW")==0 || strcmp(client_message,"RETURN")==0 || strcmp(client_message,"VIEW")==0 || strcmp(client_message,"LOGOUT")==0) break;
             }
             
             if(strcmp(client_message,"VIEW")==0){
+                memset(prompt,0,BUFFER_SIZE);
                 searchMember(profile,profile->name,prompt);
-                write(sock, prompt, strlen(prompt));
+                // strcat(prompt,"The book has succesfully been borrowed.\n");
+                // write(sock, prompt, strlen(prompt));
             }
 
             else if(strcmp(client_message,"BORROW")==0){
@@ -212,9 +214,10 @@ void *clientHandler(void *socket_desc) {
                 strcpy(prompt,"The book has succesfully been borrowed.\n");
             }
 
-            else if(strcmp(client_message,"LOGOUT")==0){
+            else if (strcmp(client_message, "LOGOUT") == 0) {
                 free(profile);
-                return;
+                close(sock);
+                return NULL;
             }
         }
 
